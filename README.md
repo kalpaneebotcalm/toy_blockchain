@@ -304,6 +304,12 @@ Example:
 
 # CLI Commands
 
+
+## Faucet/System Account
+
+To introduce initial coins into the blockchain, the system supports a special account:
+
+
 ## Add Transaction
 
 ```bash
