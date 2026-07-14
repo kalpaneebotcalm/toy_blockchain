@@ -108,8 +108,8 @@ func TestBlockchainTamperDetection(t *testing.T) {
 		if offenderIndex != 1 {
 			t.Errorf("Expected tampering to be detected at block index 1, got %d", offenderIndex)
 		}
-		if err == nil || !strings.Contains(err.Error(), "hash mismatch") {
-			t.Errorf("Expected hash mismatch error, got: %v", err)
+		if err == nil || (!strings.Contains(err.Error(), "hash mismatch") && !strings.Contains(err.Error(), "invalid merkle root")) {
+			t.Errorf("Expected hash mismatch or invalid merkle root error, got: %v", err)
 		}
 	})
 

@@ -40,6 +40,7 @@ func createGenesisBlock() block.Block {
 		Index:        0,
 		Timestamp:    GenesisTimestamp,
 		Transactions: []transaction.Transaction{},
+		MerkleRoot:   "",
 		PreviousHash: "0",
 		Nonce:        0,
 		Difficulty:   0,
@@ -139,6 +140,7 @@ func (bc *Blockchain) CreatePendingBlock(maxTx int) (block.Block, error) {
 		Index:        len(bc.Blocks),
 		Timestamp:    0, // Will be set before mining
 		Transactions: txsToInclude,
+		MerkleRoot:   utils.CalculateMerkleRoot(txsToInclude),
 		PreviousHash: bc.GetLatestBlock().Hash,
 		Nonce:        0,
 		Hash:         "",
@@ -169,6 +171,7 @@ func (bc *Blockchain) PrintChain() {
 		fmt.Printf("Difficulty:   %d\n", b.Difficulty)
 		fmt.Printf("PreviousHash: %s\n", b.PreviousHash)
 		fmt.Printf("Hash:         %s\n", b.Hash)
+		fmt.Printf("Merkle Root:  %s\n", b.MerkleRoot)
 		fmt.Printf("Nonce:        %d\n", b.Nonce)
 		fmt.Printf("Transactions: %d\n", len(b.Transactions))
 		for j, tx := range b.Transactions {
@@ -192,6 +195,10 @@ func (bc *Blockchain) Validate(difficulty int) (bool, int, error) {
 	if genesis.PreviousHash != "0" {
 		return false, 0, fmt.Errorf("genesis block previous hash must be '0', got '%s'", genesis.PreviousHash)
 	}
+	calculatedGenesisMerkleRoot := utils.CalculateMerkleRoot(genesis.Transactions)
+	if genesis.MerkleRoot != calculatedGenesisMerkleRoot {
+		return false, 0, errors.New("invalid merkle root")
+	}
 	expectedGenesisHash := utils.CalculateHash(genesis)
 	if genesis.Hash != expectedGenesisHash {
 		return false, 0, fmt.Errorf("genesis block hash is invalid: stored '%s', recalculated '%s'", genesis.Hash, expectedGenesisHash)
@@ -201,6 +208,12 @@ func (bc *Blockchain) Validate(difficulty int) (bool, int, error) {
 	for i := 1; i < len(bc.Blocks); i++ {
 		current := bc.Blocks[i]
 		previous := bc.Blocks[i-1]
+
+		// 0. Check merkle root
+		calculatedMerkleRoot := utils.CalculateMerkleRoot(current.Transactions)
+		if current.MerkleRoot != calculatedMerkleRoot {
+			return false, i, errors.New("invalid merkle root")
+		}
 
 		// 1. Check index sequentiality
 		if current.Index != i {
