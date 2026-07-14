@@ -53,7 +53,7 @@ func setupTestBlockchain(t *testing.T, difficulty int) *blockchain.Blockchain {
 		t.Fatalf("CreatePendingBlock failed: %v", err)
 	}
 	block1.Timestamp = 1719830500 // July 1, 2024 (slightly after genesis)
-	mining.MineBlock(&block1, difficulty)
+	mining.MineBlock(&block1, block1.Difficulty)
 	bc.AddMinedBlock(block1)
 
 	// Add transaction alice -> bob and mine Block 2
@@ -67,7 +67,7 @@ func setupTestBlockchain(t *testing.T, difficulty int) *blockchain.Blockchain {
 		t.Fatalf("CreatePendingBlock failed: %v", err)
 	}
 	block2.Timestamp = block1.Timestamp + 10 // sequential timestamp
-	mining.MineBlock(&block2, difficulty)
+	mining.MineBlock(&block2, block2.Difficulty)
 	bc.AddMinedBlock(block2)
 
 	return bc
@@ -139,7 +139,7 @@ func TestBlockchainTamperDetection(t *testing.T) {
 
 		// Rehash block 2 with the new timestamp so that the hash verification passes,
 		// but the chronological timestamp consistency check fails!
-		mining.MineBlock(&bc.Blocks[2], difficulty)
+		mining.MineBlock(&bc.Blocks[2], bc.Blocks[2].Difficulty)
 
 		valid, offenderIndex, err := bc.Validate(difficulty)
 		if valid {
@@ -156,7 +156,6 @@ func TestBlockchainTamperDetection(t *testing.T) {
 
 func TestTransactionRejection(t *testing.T) {
 	bc := blockchain.NewBlockchain()
-	difficulty := 1
 
 	// Faucet seeds alice with 50 coins
 	err := bc.AddTransaction(transaction.Transaction{
@@ -170,7 +169,7 @@ func TestTransactionRejection(t *testing.T) {
 
 	block1, _ := bc.CreatePendingBlock(10)
 	block1.Timestamp = time.Now().Unix()
-	mining.MineBlock(&block1, difficulty)
+	mining.MineBlock(&block1, block1.Difficulty)
 	bc.AddMinedBlock(block1)
 
 	// 1. Try to send negative amount

@@ -141,20 +141,19 @@ func mineBlock(bc *blockchain.Blockchain) {
 		return
 	}
 
-	// Set mining timestamp and difficulty
+	// Set mining timestamp
 	blockData.Timestamp = time.Now().Unix()
-	blockData.Difficulty = *difficultyFlag
 
-	fmt.Printf("Mining block %d with %d transactions (difficulty target: %d)...\n",
-		blockData.Index, len(blockData.Transactions), *difficultyFlag)
+	fmt.Printf("Mining block %d with %d transactions...\n", blockData.Index, len(blockData.Transactions))
+	fmt.Printf("Difficulty target: %d\n", blockData.Difficulty)
 
 	workers := 4
 
-    nonce, elapsed := mining.ConcurrentMineBlock(
-       &blockData,
-       *difficultyFlag,
-       workers,
-    )
+	nonce, elapsed := mining.ConcurrentMineBlock(
+		&blockData,
+		blockData.Difficulty,
+		workers,
+	)
 
 	bc.AddMinedBlock(blockData)
 
@@ -169,6 +168,7 @@ func mineBlock(bc *blockchain.Blockchain) {
 	fmt.Printf("  Nonce found:  %d\n", nonce)
 	fmt.Printf("  Block Hash:   %s\n", blockData.Hash)
 	fmt.Printf("  Time elapsed: %s\n", elapsed)
+	fmt.Printf("Difficulty used: %d\n", blockData.Difficulty)
 }
 
 func getBalance(bc *blockchain.Blockchain, args []string) {

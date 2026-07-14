@@ -12,7 +12,7 @@
     },
     {
       "index": 1,
-      "timestamp": 1784003575,
+      "timestamp": 1784008665,
       "transactions": [
         {
           "sender": "faucet",
@@ -22,27 +22,9 @@
       ],
       "merkleRoot": "965efddaa47e0192763073487cb199f88eaeb5e0316dde0a591855977394d430",
       "previousHash": "ced6beec74b32404971ed97f01af4ad1f2345aea9c17a3e7de033b33a0cf133f",
-      "nonce": 7407,
-      "difficulty": 4,
-      "hash": "0000b680a679d31acf299412e89db3d100f6fe0412603bd49df38995a7c1d85b"
-    },
-    {
-      "index": 2,
-      "timestamp": 1784003586,
-      "transactions": [
-        {
-          "sender": "alice",
-          "receiver": "bob",
-          "amount": 40,
-          "public_key": "BFQ3kwh1jKWyjwwR8d+lDbMHx91I+X0vRXjRmB0DJv3zP1HYC1owOZtH8K9avQ4b6PdpKKCDdsxX4H9PVPW2nEA=",
-          "signature": "AGmfV3lwaqY91Mq2oHwfvSiQE99I52Td4CEbsavJwAyH18il0K2m+8j2i1/x3R/bl46savX7ZpIMdAIFnPe8qA=="
-        }
-      ],
-      "merkleRoot": "3ae5a4856c1fbce501daf884687ed4ca3415433608d6974f69e4a4df84665422",
-      "previousHash": "0000b680a679d31acf299412e89db3d100f6fe0412603bd49df38995a7c1d85b",
-      "nonce": 50341,
-      "difficulty": 4,
-      "hash": "00004b9ea3267a6aff10267e38a3ae3202fbda9704ec2c4d61399779d2616926"
+      "nonce": 83,
+      "difficulty": 1,
+      "hash": "06f33d1596fa8597c708376c8ce05e9f70973c82c18b7d049361553da00a061d"
     }
   ],
   "pending_transactions": []

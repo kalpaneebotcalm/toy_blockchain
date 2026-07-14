@@ -143,6 +143,7 @@ func (bc *Blockchain) CreatePendingBlock(maxTx int) (block.Block, error) {
 		MerkleRoot:   utils.CalculateMerkleRoot(txsToInclude),
 		PreviousHash: bc.GetLatestBlock().Hash,
 		Nonce:        0,
+		Difficulty:   CalculateNextDifficulty(bc.Blocks),
 		Hash:         "",
 	}
 
@@ -208,6 +209,12 @@ func (bc *Blockchain) Validate(difficulty int) (bool, int, error) {
 	for i := 1; i < len(bc.Blocks); i++ {
 		current := bc.Blocks[i]
 		previous := bc.Blocks[i-1]
+
+		// 0. Check difficulty adjustment sequence
+		expectedDifficulty := CalculateNextDifficulty(bc.Blocks[:i])
+		if current.Difficulty != expectedDifficulty {
+			return false, i, errors.New("invalid difficulty adjustment")
+		}
 
 		// 0. Check merkle root
 		calculatedMerkleRoot := utils.CalculateMerkleRoot(current.Transactions)
