@@ -1,6 +1,7 @@
 package blockchain_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -8,7 +9,30 @@ import (
 	"toy-blockchain/blockchain"
 	"toy-blockchain/mining"
 	"toy-blockchain/transaction"
+	"toy-blockchain/utils"
 )
+
+func signTxForTest(t *testing.T, sender, receiver string, amount float64) transaction.Transaction {
+	tx := transaction.Transaction{
+		Sender:   sender,
+		Receiver: receiver,
+		Amount:   amount,
+	}
+	if sender != "system" && sender != "faucet" {
+		privKey, pubKey, err := utils.GenerateKeyPair()
+		if err != nil {
+			t.Fatalf("GenerateKeyPair failed: %v", err)
+		}
+		data := sender + receiver + fmt.Sprintf("%f", amount)
+		sig, err := utils.SignTransaction(data, privKey)
+		if err != nil {
+			t.Fatalf("SignTransaction failed: %v", err)
+		}
+		tx.PublicKey = pubKey
+		tx.Signature = sig
+	}
+	return tx
+}
 
 // setupTestBlockchain creates an honest chain of 3 blocks (genesis, block 1, block 2)
 func setupTestBlockchain(t *testing.T, difficulty int) *blockchain.Blockchain {
@@ -33,11 +57,7 @@ func setupTestBlockchain(t *testing.T, difficulty int) *blockchain.Blockchain {
 	bc.AddMinedBlock(block1)
 
 	// Add transaction alice -> bob and mine Block 2
-	err = bc.AddTransaction(transaction.Transaction{
-		Sender:   "alice",
-		Receiver: "bob",
-		Amount:   40.0,
-	})
+	err = bc.AddTransaction(signTxForTest(t, "alice", "bob", 40.0))
 	if err != nil {
 		t.Fatalf("Failed to add transaction: %v", err)
 	}
@@ -154,51 +174,31 @@ func TestTransactionRejection(t *testing.T) {
 	bc.AddMinedBlock(block1)
 
 	// 1. Try to send negative amount
-	err = bc.AddTransaction(transaction.Transaction{
-		Sender:   "alice",
-		Receiver: "bob",
-		Amount:   -5.0,
-	})
+	err = bc.AddTransaction(signTxForTest(t, "alice", "bob", -5.0))
 	if err == nil {
 		t.Error("Expected rejection for negative transaction amount, but transaction was accepted")
 	}
 
 	// 2. Try to send zero amount
-	err = bc.AddTransaction(transaction.Transaction{
-		Sender:   "alice",
-		Receiver: "bob",
-		Amount:   0.0,
-	})
+	err = bc.AddTransaction(signTxForTest(t, "alice", "bob", 0.0))
 	if err == nil {
 		t.Error("Expected rejection for zero transaction amount, but transaction was accepted")
 	}
 
 	// 3. Try to overspend immediately (60 coins when balance is 50)
-	err = bc.AddTransaction(transaction.Transaction{
-		Sender:   "alice",
-		Receiver: "bob",
-		Amount:   60.0,
-	})
+	err = bc.AddTransaction(signTxForTest(t, "alice", "bob", 60.0))
 	if err == nil {
 		t.Error("Expected rejection for overspending, but transaction was accepted")
 	}
 
 	// 4. Try to spend valid amount (30 coins)
-	err = bc.AddTransaction(transaction.Transaction{
-		Sender:   "alice",
-		Receiver: "bob",
-		Amount:   30.0,
-	})
+	err = bc.AddTransaction(signTxForTest(t, "alice", "bob", 30.0))
 	if err != nil {
 		t.Fatalf("Valid transaction failed to add: %v", err)
 	}
 
 	// 5. Try to spend another 30 coins while the first 30 is still pending (should fail due to pending spent tracking)
-	err = bc.AddTransaction(transaction.Transaction{
-		Sender:   "alice",
-		Receiver: "bob",
-		Amount:   30.0,
-	})
+	err = bc.AddTransaction(signTxForTest(t, "alice", "bob", 30.0))
 	if err == nil {
 		t.Error("Expected rejection for cumulative overspending in pending pool, but transaction was accepted")
 	}

@@ -53,8 +53,8 @@ func createGenesisBlock() block.Block {
 // VerifyTransaction checks if a transaction is valid.
 func (bc *Blockchain) VerifyTransaction(tx transaction.Transaction) error {
 	if tx.Amount <= 0 || math.IsNaN(tx.Amount) || math.IsInf(tx.Amount, 0) {
-    return errors.New("invalid transaction amount")
-}
+		return errors.New("invalid transaction amount")
+	}
 	if tx.Sender == "" {
 		return errors.New("sender name cannot be empty")
 	}
@@ -65,7 +65,19 @@ func (bc *Blockchain) VerifyTransaction(tx transaction.Transaction) error {
 		return errors.New("sender and receiver cannot be the same account")
 	}
 
-	
+	// Verify digital signature
+	// System and faucet accounts are allowed without signatures
+	if tx.Sender != "system" && tx.Sender != "faucet" {
+		if tx.PublicKey == "" || tx.Signature == "" {
+			return errors.New("invalid transaction signature")
+		}
+
+		valid := utils.VerifyTransactionSignature(tx)
+		if !valid {
+			return errors.New("invalid transaction signature")
+		}
+	}
+
 	if tx.Sender == "system" || tx.Sender == "faucet" {
 		return nil
 	}
@@ -215,6 +227,22 @@ func (bc *Blockchain) Validate(difficulty int) (bool, int, error) {
 		// 5. Check timestamp consistency (chronological order)
 		if current.Timestamp < previous.Timestamp {
 			return false, i, fmt.Errorf("block timestamp %d is earlier than previous block timestamp %d", current.Timestamp, previous.Timestamp)
+		}
+	}
+
+	// 6. Verify transaction signatures across all blocks (skip faucet/system and old unsigned transactions)
+	for i := 0; i < len(bc.Blocks); i++ {
+		current := bc.Blocks[i]
+		for _, tx := range current.Transactions {
+			if tx.Sender == "faucet" || tx.Sender == "system" {
+				continue
+			}
+			if tx.PublicKey == "" || tx.Signature == "" {
+				continue // Handle missing signature fields safely for old transactions
+			}
+			if !utils.VerifyTransactionSignature(tx) {
+				return false, i, fmt.Errorf("invalid transaction signature")
+			}
 		}
 	}
 
